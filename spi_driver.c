@@ -63,7 +63,10 @@ int spi_init(spi_handle_t* spi_handle, spi_reg_t* spi_base)
         return -EINVAL;
     }
 
+    // clear before set
+    spi_base->CS &= ~(0x3U << SPI_CS_CS_Pos);
     spi_base->CS |= (spi_handle->Chip_select << SPI_CS_CS_Pos);
+
     #ifdef DEBUG
     pr_info("SPI: Chip select configured succesfully : %u\n", spi_handle->Chip_select);
     #endif
@@ -135,13 +138,24 @@ int spi_enable_int(spi_reg_t* spi_base)
     return 0;
 }
 
-int spi_write(spi_reg_t* spi_base, uint8_t byte)
+void spi_write(spi_reg_t* spi_base, uint8_t byte)
 {
     spi_base->CS |= TA_SET_MASK;
+    while (!SPI_GET_TXD(spi_base->CS));
+    #ifdef DEBUG
+    pr_info("SPI WRITE: TX FIFO can accept data\n");
+    #endif 
 
-    // implement writing to reg such that we can write to FIFO
+    spi_base->FIFO = byte;
+
+    while (!SPI_GET_DONE(spi_base->CS));
+    #ifdef DEBUG
+    pr_info("SPI WRITE: Transfer Done\n");
+    #endif 
+
+    // only sending, don't care what the slave sent back during that transfer
+    while (SPI_GET_RXD(spi_base->CS))
+        (void)spi_base->FIFO;
 
     spi_base->CS &= ~(TA_SET_MASK);
-
-    return 0;
 }
