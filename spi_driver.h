@@ -17,13 +17,18 @@
 
 #define SPI_APB_CLK_HZ   250000000UL  // only reliable after locking core_freq
 
+// STATUS BITS
 #define SPI_CS_CSPOL2_Pos   23U // Chip select 2 Polarity : 0 -> active Low, 1 -> active High
 #define SPI_CS_CSPOL1_Pos   22U // Chip select 1 Polarity : 0 -> active Low, 1 -> active High
 #define SPI_CS_CSPOL0_Pos   21U // Chip select 0 Polarity : 0 -> active Low, 1 -> active High
+
+// STATUS BITS
 #define SPI_CS_RXF_Pos      20U // RX FIFO Full : 0 -> not full, 1 -> full, no further serial data will be sent/recv until u read from FIFO
 #define SPI_CS_TXD_Pos      18U // TX FIFO can accept Data : 0 -> TX FIFO full and cannot accept more, 1 -> has space for at least 1 B
 #define SPI_CS_RXD_Pos      17U // RX FIFO contains Data : 0 -> RX FIFO empty, 1 -> contains at least 1 B
 #define SPI_CS_DONE_Pos     16U // 0 Transfer in progress or not active so TA = 0, 1 Transfer is complete, cleared by writing more data to the TX FIFO or setting TA = 0
+
+// CONTROL BITS
 #define SPI_CS_INTR_Pos     10U // 0 Don't generate interrupts on RX FIFO condition, 1 generate interrupt while RXR = 1
 #define SPI_CS_INTD_Pos      9U // 0 Don't generate interrupts on Transfer complete, 1 generate interrupt when DONE = 1
 #define SPI_CS_TA_Pos        7U // 0 transfer not active, 1 transfer active
@@ -40,10 +45,13 @@
 
 #define CLEAR_RX_MASK        (1U << SPI_CS_CLEAR_RX_Pos)
 #define CLEAR_TX_MASK        (1U << SPI_CS_CLEAR_TX_Pos)
-#define DISABLE_RX_INT_MASK  (0U)
-#define ENABLE_RX_INT_MASK   (1U << SPI_CS_INTR_Pos)
-#define DISABLE_TX_INT_MASK  (0U)
-#define ENABLE_TX_INT_MASK   (1U << SPI_CS_INTD_Pos)
+
+#define ENABLE_RX_INT_MASK   (1U << SPI_CS_INTR_Pos)   // set   bit 10
+#define DISABLE_RX_INT_MASK  (~(1U << SPI_CS_INTR_Pos)) // clear bit 10
+
+#define ENABLE_TX_INT_MASK   (1U << SPI_CS_INTD_Pos)   // set   bit 9
+#define DISABLE_TX_INT_MASK  (~(1U << SPI_CS_INTD_Pos)) // clear bit 9
+
 #define TA_SET_MASK          (1U << SPI_CS_TA_Pos)
 
 #define SPI_CS_ACTIVE_LOW  (0U)
@@ -64,6 +72,10 @@
 #define SPI_MODE_1   (1U)
 #define SPI_MODE_2   (2U)
 #define SPI_MODE_3   (3U)
+
+#define SPI_POLLING  (0U)
+#define SPI_INTERUPT (1U)
+#define SPI_DMA      (2U)
 
 
 #define SPI_CLK_CDIV_Pos   0U
@@ -88,12 +100,15 @@ typedef struct
     uint32_t mode;
     uint32_t Chip_select;
     uint32_t CS_polarity;
+    uint32_t Technique;
 } spi_handle_t;
 
 int spi_init(spi_handle_t* spi_handle, spi_reg_t* spi_base);
-int spi_write(uint8_t byte);
-int spi_write_bytes(uint8_t* byte, size_t size);
-int spi_read(uint8_t* byte);
-int spi_read_bytes(uint8_t* byte, size_t* size);
+int spi_disable_int(spi_reg_t* spi_base);
+int spi_enable_int(spi_reg_t* spi_base);
+int spi_write(spi_reg_t* spi_base, uint8_t byte);
+int spi_write_bytes(spi_reg_t* spi_base, uint8_t* byte, size_t size);
+int spi_read(spi_reg_t* spi_base, uint8_t* byte);
+int spi_read_bytes(spi_reg_t* spi_base, uint8_t* byte, size_t* size);
 
 #endif
