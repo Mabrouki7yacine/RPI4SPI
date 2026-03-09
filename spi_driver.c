@@ -129,7 +129,7 @@ int spi_enable_int(spi_reg_t* spi_base)
 {   
     if (!spi_base) {
         #ifdef DEBUG
-        pr_err("SPI: null pointer passed to spi_disable_int\n");
+        pr_err("SPI: null pointer passed to spi_enable_int\n");
         #endif
         return -EINVAL;
     }
@@ -140,6 +140,13 @@ int spi_enable_int(spi_reg_t* spi_base)
 
 void spi_write(spi_reg_t* spi_base, uint8_t byte)
 {
+    if (!spi_base) {
+        #ifdef DEBUG
+        pr_err("SPI: null pointer passed to spi_write\n");
+        #endif
+        return;
+    }
+
     spi_base->CS |= TA_SET_MASK;
     while (!SPI_GET_TXD(spi_base->CS));
     #ifdef DEBUG
@@ -158,4 +165,33 @@ void spi_write(spi_reg_t* spi_base, uint8_t byte)
         (void)spi_base->FIFO;
 
     spi_base->CS &= ~(TA_SET_MASK);
+}
+
+void spi_read(spi_reg_t* spi_base, uint8_t* byte)
+{
+    if (!spi_base || !byte) {
+        #ifdef DEBUG
+        pr_err("SPI: null pointer passed to spi_read\n");
+        #endif
+        return;
+    }
+    spi_base->CS |= TA_SET_MASK;
+    while (!SPI_GET_TXD(spi_base->CS));
+
+    // Send dummy byte to generate SCLK so slave can respond
+    spi_base->FIFO = 0x00;
+
+    while (!SPI_GET_DONE(spi_base->CS));
+    #ifdef DEBUG
+    pr_info("SPI READ: Transfer Done\n");
+    #endif
+
+    if (SPI_GET_RXD(spi_base->CS)) {
+        *byte = (uint8_t)spi_base->FIFO;
+        #ifdef DEBUG
+        pr_info("SPI READ: received 0x%02X\n", *byte);
+        #endif
+    }
+    spi_base->CS &= ~(TA_SET_MASK);
+
 }

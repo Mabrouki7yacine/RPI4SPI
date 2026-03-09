@@ -14,6 +14,8 @@
 
 #define SPI_PERIPH_BASE 0x7E204000
 #define SPI0_BASE (SPI_PERIPH_BASE + 0U)
+#define SPI0_PHYS_BASE (SPI0_BASE + 0x80000000)
+
 
 #define SPI_APB_CLK_HZ   250000000UL  // Reliable value
 
@@ -93,7 +95,7 @@ typedef struct
     volatile uint32_t DC;   // We'll not use this (DMA mode)
 } spi_reg_t;
 
-#define SPI0  ((spi_reg_t*)(SPI0_BASE))
+// #define SPI0  ((spi_reg_t*)(SPI0_BASE))
 
 typedef struct 
 {
@@ -104,12 +106,12 @@ typedef struct
     uint32_t Technique;
 } spi_handle_t;
 
-int spi_init(spi_handle_t* spi_handle, spi_reg_t* spi_base);
-int spi_disable_int(spi_reg_t* spi_base);
-int spi_enable_int(spi_reg_t* spi_base);
+int  spi_init(spi_handle_t* spi_handle, spi_reg_t* spi_base);
+int  spi_disable_int(spi_reg_t* spi_base);
+int  spi_enable_int(spi_reg_t* spi_base);
 void spi_write(spi_reg_t* spi_base, uint8_t byte);
 void spi_write_bytes(spi_reg_t* spi_base, uint8_t* byte, size_t size);
-int spi_read(spi_reg_t* spi_base, uint8_t* byte);
-int spi_read_bytes(spi_reg_t* spi_base, uint8_t* byte, size_t* size);
+void spi_read(spi_reg_t* spi_base, uint8_t* byte);
+void spi_read_bytes(spi_reg_t* spi_base, uint8_t* byte, size_t* size);
 
 #endif
